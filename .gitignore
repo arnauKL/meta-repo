@@ -1,0 +1,4 @@
+dither/dither
+dither/*.ppm
+dither/*.JPEG
+dither/*.png
