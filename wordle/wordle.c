@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// It's always 5
 #define WORDLEN 5
 
 enum result
@@ -32,7 +33,7 @@ main()
 {
     char correct_word[] = "racer";
 
-    printf("Enter 5 letter word:\n");
+    printf("Enter %d letter word:\n", WORDLEN);
     fflush(stdout);
 
     while (1) {
