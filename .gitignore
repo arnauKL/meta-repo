@@ -1,4 +1,12 @@
 dither/dither
-dither/*.ppm
 dither/*.JPEG
 dither/*.png
+dither/400
+bootstrapping/maliciousq
+bootstrapping/q
+pipedk-status/obj
+pipedk-status/pipedk
+c_tricks/a.out
+notities/tagfinder
+notities/tagindex
+wordle/wordle
