@@ -1,0 +1,29 @@
+Resources
+=========
+
+https://brainfuck.net/learn
+https://github.com/4ffy/brainfuck-programs/blob/main/sierpinski_carpet.bf
+
+
+Instructions
+============
+
++	Increment. Add 1 to the current cell. If the cell is at 255, it wraps back to 0.
+-   Decrement. Subtract 1 from the current cell. If the cell is at 0, it wraps to 255.
+>   Move Right. Move the pointer one cell to the right.
+<   Move Left. Move the pointer one cell to the left.
+.   Output. Print the current cell's value as an ASCII character. For example, 72 prints H, 101 prints e.
+,   Input. Read one byte of input and store its value in the current cell.
+[   Loop Start. If the current cell is 0, skip ahead to the instruction after the matching ]. Otherwise, continue into the loop.
+]   Loop End. If the current cell is not 0, jump back to the matching [. Otherwise, continue past the loop.
+
+
+nested loop program:
+    +++++++++++++[>+[++++<-]++--]>-.
+                  ^
+
+      v
+dec [12][05][00][00]
+hex [0c][00][00][00]
+
+dth 1
