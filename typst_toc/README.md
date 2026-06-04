@@ -1,26 +1,42 @@
 # TOC generator for typst
 
-When I use typst in neovim I get lost since headings are just `===`
+When I use typst in nvim I get lost since headings are just `===`
 
 `toccer` is a utility that parses a file and generates a TOC with numbers like
 it would be generated in the finalized pdf.
 
 Usage:
 ```sh
-toccer file.typ
+toccer file.typ [n]
 ```
 
-I only use this through nvim though. I have a binding to have MiniPick show the
-output to me. I'd like it if I coud select an entry and go to that line number
-but I have not figured out how to do that yet:
+# nvim integration
+
+I only use this through nvim though, I have it output file and line number so I
+can jump to the locations.
+
+The following config generates a command `TypstTOC` that calls the script and
+stores the output in the location list:
 
 ```lua
--- call toccer and show in MiniPick
-vim.api.nvim_create_user_command("TypstTOC", function() 
-  MiniPick.builtin.cli({ command = { 'toccer', vim.fn.expand("%") } })
-end, {})
-
-vim.keymap.set("n", "<leader>tc", ':TypstTOC<CR>', { noremap = true, silent = true, desc = "Show TOC (Typst)" })
+-- using vim's location list
+vim.api.nvim_create_user_command("TypstTOC", ":lgetexpr system('toccer ' .. expand('%')) | lopen",  {})
 ```
 
-No LLM used.
+Then, the file can be navigated using `[l` / `]l` and via the location list buffer.
+
+# configuration
+
+There are some options defined via typst comments: depth and starting heading
+number can be configured:
+
+```typ
+// toc-depth: 6
+// toc-start: 1
+```
+
+- `toc-depth` changes how many depth levels are shown.
+- `toc-start` changes the starting section number. I sometimes separate
+  documents into several typst files.
+
+When not defined, `toc-depth` is 6 and `toc-start`, 1.

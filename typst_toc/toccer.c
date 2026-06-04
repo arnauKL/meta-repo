@@ -5,107 +5,125 @@
  * Store each line with its level:
  *      = My first heading -> struct {level: 1, content: "My first heading\0"}
  *
- *
  * Once the whole file has been read, print out the stored headers.
- *      it could be nice to print them with numbers as if a real TOC.
- *      and even further this could also print line numbers so vim could go
- *      there?
- *
+ * Neovim expects:
+ * filename:line:col:message
  *
  * No LLM use
- *
  */
 
-// clang-format on
-#include <stdio.h>
+
+#include <ctype.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
-#include <unistd.h> // idk if I need this, it provides STDIN_FILENO but:
-// Note that mixing use of FILEs and raw file
-// descriptors can produce unexpected results 
-// and  should  generally  be avoided.
-
-#define BUF_SIZE 256
-#define LINE_LEN 80
-#define MAX_DEPTH 5 // max depth in typst is 5 (aka, six '=')
+#define BUF_SIZE  256
+#define LINE_LEN  80
+#define MAX_DEPTH 6 // max depth in typst is 6 (aka, six '=')
 
 /*
  * Heading struct:
- * contains 80-char null-terminated string (truncated if it gets longer)
- * future updates could add the heading number/depth
+ * contains
+ *  - null-terminated string (truncated it's too long)
+ *  - depth (number of '='s, 0-indexed)
+ *  - line (line number of the heading)
  */
-typedef struct {
+typedef struct
+{
     char data[LINE_LEN];
     int depth;
     int line;
 } Heading;
 
-typedef struct {
-    Heading ** items; // array of headings
-    int count; // how many items it has
-    size_t capacity; // how much memory it has allocated
+/*
+ * Headings struct: list of headings
+ * contains:
+ * - list of `Heading`
+ * - count: number of headings in the array at any time
+ * - capacity: space allocated (in num of Headings)
+ */
+typedef struct
+{
+    Heading **items;
+    int count;
+    size_t capacity;
+    int start_section; // user config: starting heading num
+    int max_depth_limit; // user config: max depth shown
 } Headings;
 
-struct HeadingList {
-    char* elems; // a list of `struct Heading`s
-    size_t count; // the ammount of these `struct Heading`s
-    size_t capacity;
-};
+/*
+ * macro to add headings, reallocs if needed
+ */
+#define heading_append(hs, h)                                                                      \
+    do {                                                                                           \
+        if (hs.count >= hs.capacity) {                                                             \
+            if (hs.count == 0) {                                                                   \
+                hs.capacity = 256;                                                                 \
+            } else {                                                                               \
+                hs.capacity *= 2;                                                                  \
+            }                                                                                      \
+            hs.items = realloc(hs.items, hs.capacity * sizeof(hs.items[0]));                       \
+            if (hs.items == NULL) {                                                                \
+                fprintf(stderr, "Error reallocating memory\n");                                    \
+                return 1;                                                                          \
+            }                                                                                      \
+        }                                                                                          \
+        hs.items[hs.count++] = h;                                                                  \
+    } while (0)
 
-#define heading_append(hs, h)\
-    do {\
-        if (hs.count >= hs.capacity) {\
-            if (hs.count == 0) { hs.capacity = 256; }\
-            else { hs.capacity *= 2; }\
-            hs.items = realloc(hs.items, hs.capacity*sizeof(hs.items[0]));\
-            if (hs.items == NULL) {\
-                fprintf(stderr, "Error reallocating memory\n");\
-                return EXIT_FAILURE;\
-            }\
-        }\
-        hs.items[hs.count++] = h;\
-    } while (0)\
-
-void print_headings_numbering(Headings *hs) {
-    int n[MAX_DEPTH+1] = {0}; /*store numbering*/
+/*
+ * *hs: ptr to list of headings
+ * *filename: argv[1], normally; so nvim knows where headings come from
+ */
+void
+print_headings_numbering(Headings *hs, const char *filename)
+{
+    int n[MAX_DEPTH] = {0}; /*store numbering*/
+    n[0] = hs->start_section != 0 ? hs->start_section - 1 : 0; // configure initial section
     int last_depth = 0;
-    for (int i = 0; i < hs->count; i++)
-    {
+
+
+    for (int i = 0; i < hs->count; i++) {
         int depth = hs->items[i]->depth;
 
+        if (depth > hs->max_depth_limit - 1) {
+            continue;
+        }
         if (last_depth > depth) {
-            for (int j = depth + 1; j < MAX_DEPTH; j++)
-                n[j] = 0;
+            for (int j = depth + 1; j < MAX_DEPTH; j++) n[j] = 0;
         }
 
         last_depth = depth;
-        depth++;
         n[hs->items[i]->depth]++;
 
-        printf("%3d|", hs->items[i]->line);
+        printf("%s:", filename);
+        printf("%d:1:", hs->items[i]->line);
         for (int d = 0; d <= hs->items[i]->depth; d++) {
             printf("%d.", n[d]);
         }
         printf(" %s", hs->items[i]->data);
-        //printf("\t|%d:0|", hs->items[i]->line);
         printf("\n");
     }
 }
 
+/*
+ * cstr: c-string containing the heading text (null terminated)
+ * dpth: depth of the heading (number of '=', 0-indexed)
+ */
 Heading *
-create_heading(const char* cstr, int dpth)
+create_heading(const char *cstr, int dpth)
 {
-    Heading * h = malloc(sizeof(Heading));
+    Heading *h = malloc(sizeof(Heading));
     if (h == NULL) {
         fprintf(stderr, "Error allocating memory\n");
         return NULL;
     }
     strncpy(h->data, cstr, LINE_LEN);
+    h->data[LINE_LEN - 1] = '\0';
     // cap depth to MAX_DEPTH
-    h->depth = dpth > MAX_DEPTH ? MAX_DEPTH : dpth;
+    h->depth = dpth >= MAX_DEPTH ? MAX_DEPTH - 1 : dpth;
     return h;
 }
 
@@ -113,10 +131,12 @@ create_heading(const char* cstr, int dpth)
  * h: pointer to Heading
  * s: current character in the buffer
  */
-Heading * absorb_to_newline(char *s){
+Heading *
+absorb_to_newline(char *s)
+{
     int depth = 0;
     // Add padding to avoid storing the space after '='
-    char* start = s + 2;
+    char *start = s + 2;
 
     do {
         s++;
@@ -125,14 +145,15 @@ Heading * absorb_to_newline(char *s){
             // Do not store '='s
             start++;
         }
-    } while (*s != '\n');
+    } while (*s != '\n' && *s != '\0');
 
-    // s points to a newline, replace with null
+    // s points to a newline (or null), replace with null
     *s = '\0';
     return create_heading(start, depth);
 }
 
-int main(int argc, const char ** argv)
+int
+main(int argc, const char **argv)
 {
     FILE *fIn = NULL;
 
@@ -140,9 +161,6 @@ int main(int argc, const char ** argv)
     if (argc == 2) {
         // we got a filename via cli
         fIn = fopen(argv[1], "r");
-    } else if (argc == 1) {
-        // we read from stdin
-        fIn = stdin;
     } else {
         // wrong cli args
         printf("usage: %s <filename.typ>\n", argv[0]);
@@ -162,7 +180,7 @@ int main(int argc, const char ** argv)
     int line = 0;
 
     // read from the file
-    for (;;){
+    for (;;) {
         // fgets stops at EOF and newlines and stores newlines in the buffer
         char *s = fgets(buf, sizeof(buf), fIn);
         line++;
@@ -172,18 +190,31 @@ int main(int argc, const char ** argv)
             break;
         }
 
+        // Check for settings comments
+        if (strncmp(buf, "// toc-start: ", 14) == 0) {
+            int tmp = atoi(buf + 14);
+            int clamped = (tmp < 1) ? 0 : tmp;
+            hs.start_section = clamped;
+            continue; // Skip processing this as a heading
+        }
+        if (strncmp(buf, "// toc-depth: ", 14) == 0) {
+            int tmp = atoi(buf + 14);
+            int clamped = (tmp > MAX_DEPTH - 1) || (tmp < 0) ? MAX_DEPTH : tmp;
+            hs.max_depth_limit = clamped;
+            continue; 
+        }
         // look at the first char to see if it's a heading
         do {
             if (*s == '=') {
                 Heading *h = absorb_to_newline(s);
-                h->line = line; 
+                h->line = line;
                 heading_append(hs, h);
-            } 
+            }
         } while (isspace(*s++));
     }
     fclose(fIn);
 
-    print_headings_numbering(&hs);
+    print_headings_numbering(&hs, argv[1]);
 
     return EXIT_SUCCESS;
 }
