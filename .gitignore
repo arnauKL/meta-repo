@@ -15,3 +15,4 @@ c_tricks/a.out
 bf_interpreter/interpreter
 typst_toc/toccer
 typst_toc/test.typ
+**/*.out

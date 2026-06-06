@@ -1,6 +1,8 @@
 # `pipedk` status
 
-`pipedk` is a custom status bar program designed for [`dwl`](https://codeberg.org/dwl/dwl) (and other window managers) to minimise resource usage and learn C on linux.
+`pipedk` is a custom status bar program designed for
+[`dwl`](https://codeberg.org/dwl/dwl) (and other window managers) to minimise
+resource usage and learn C on linux.
 
 ## Motivation
 
@@ -21,17 +23,17 @@ Initially, I planned to use `inotify` for real-time file watching, but learned t
 
 ## Features
 
-- **Zero dynamic allocation**: Static buffers.
-- **In-place string updates**: Super janky but works, avoids string concatenation and extra buffers.
-- **Extensibility**: Bare-bones module system.
+- Zero dynamic allocation
+- In-place string updates
+- Bare-bones module system.
 
-## Installation and usage
+Installation and use:
 
 ```bash
 git clone https://github.com/arnauKL/pipedk-status.git
 cd pipedk-status
 make
-sudo make install  # Optional: installs to /usr/local/bin
+sudo make install
 ```
 
 `pipedk` outputs status information to `stdout`, designed to be piped into a wm:
