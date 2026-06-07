@@ -1,4 +1,6 @@
 dither/dither
+dither/stb_image.h
+dither/stb_image_write.h
 dither/*.JPEG
 dither/*.png
 dither/400
