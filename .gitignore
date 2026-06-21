@@ -18,3 +18,4 @@ bf_interpreter/interpreter
 typst_toc/toccer
 typst_toc/test.typ
 **/*.out
+bolleke/bol

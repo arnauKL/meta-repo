@@ -12,7 +12,6 @@
  * No LLM use
  */
 
-
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -49,7 +48,7 @@ typedef struct
     Heading **items;
     int count;
     size_t capacity;
-    int start_section; // user config: starting heading num
+    int start_section;   // user config: starting heading num
     int max_depth_limit; // user config: max depth shown
 } Headings;
 
@@ -80,10 +79,9 @@ typedef struct
 void
 print_headings_numbering(Headings *hs, const char *filename)
 {
-    int n[MAX_DEPTH] = {0}; /*store numbering*/
+    int n[MAX_DEPTH] = {0};                                    /*store numbering*/
     n[0] = hs->start_section != 0 ? hs->start_section - 1 : 0; // configure initial section
     int last_depth = 0;
-
 
     for (int i = 0; i < hs->count; i++) {
         int depth = hs->items[i]->depth;
@@ -201,7 +199,7 @@ main(int argc, const char **argv)
             int tmp = atoi(buf + 14);
             int clamped = (tmp > MAX_DEPTH - 1) || (tmp < 0) ? MAX_DEPTH : tmp;
             hs.max_depth_limit = clamped;
-            continue; 
+            continue;
         }
         // look at the first char to see if it's a heading
         do {

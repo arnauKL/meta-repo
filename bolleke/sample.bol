@@ -1,0 +1,8 @@
+(doc
+    (h1 This is a level 1 heading)
+    (p This is a short paragraph. (lorem 40))
+    (h2 This is a level 2 heading)
+    (p This is (b bold) text.
+    Line breaks should not be an issue.
+
+    And this should be a paragraph automatically?))

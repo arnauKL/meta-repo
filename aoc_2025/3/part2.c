@@ -26,7 +26,6 @@ main(int argc, const char ** argv)
         char * c = fgets(bank, sizeof(bank)*sizeof(bank[0]), fIn);
         if (c == NULL) { break; }
 
-
         char highest[NUM_BATTERIES+1] = {0};
         highest[NUM_BATTERIES] = '\0';
         int idx_highest = 0;
