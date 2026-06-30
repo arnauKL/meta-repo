@@ -84,8 +84,8 @@ print_headings_numbering(Headings *hs, const char *filename)
     int last_depth = 0;
 
     for (int i = 0; i < hs->count; i++) {
-        int depth = hs->items[i]->depth;
 
+        int depth = hs->items[i]->depth;
         if (depth > hs->max_depth_limit - 1) {
             continue;
         }
@@ -173,6 +173,8 @@ main(int argc, const char **argv)
 
     // create array of headings
     Headings hs = {0};
+    hs.max_depth_limit = MAX_DEPTH;
+    hs.start_section = 0;
 
     char buf[BUF_SIZE];
     int line = 0;
